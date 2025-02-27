@@ -14,12 +14,9 @@ model = genai.GenerativeModel("gemini-1.5-pro-latest")
 # Streamlit page configuration
 st.set_page_config(page_title="FinTech Chatbot", page_icon="💰", layout="centered")
 
-# Custom CSS for chat bubbles & fixed input
+# Custom CSS for chat bubbles
 st.markdown("""
     <style>
-        * {
-            font-family: "Times New Roman", Times, serif !important;
-        }
         body {
             background-color: #121212;
             color: white;
@@ -27,7 +24,6 @@ st.markdown("""
         .chat-container {
             max-width: 600px;
             margin: auto;
-            padding-bottom: 60px; /* Space for input box */
         }
         .user-bubble {
             background: linear-gradient(to right, #007bff, #0056b3);
@@ -37,7 +33,6 @@ st.markdown("""
             max-width: 75%;
             text-align: right;
             align-self: flex-end;
-            margin: 5px 0;
         }
         .bot-bubble {
             background: linear-gradient(to right, #d4edda, #a8e6cf);
@@ -47,40 +42,20 @@ st.markdown("""
             max-width: 75%;
             text-align: left;
             align-self: flex-start;
-            margin: 5px 0;
         }
         .message-container {
             display: flex;
             flex-direction: column;
         }
-        /* Fixed Input Box at Bottom */
-        .input-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 600px;
-            display: flex;
-            gap: 10px;
-            background: #121212;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .stTextInput>div>div>input {
-            flex: 1;
-            padding: 12px;
-            border-radius: 20px;
-            border: 1px solid #444;
-            background: #333;
-            color: white;
-        }
         .stButton>button {
             background: linear-gradient(to right, #007bff, #0056b3);
             color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 12px 20px;
-            cursor: pointer;
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+        .stTextInput>div>div>input {
+            border-radius: 10px;
+            padding: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -94,7 +69,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Chat Box
-st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
+st.markdown("<div class='chat-box'>", unsafe_allow_html=True)
 
 for msg in st.session_state.messages:
     if msg["role"] == "user":
@@ -104,31 +79,29 @@ for msg in st.session_state.messages:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Fixed Input Box & Send Button Next to Each Other
-st.markdown("<div class='input-container'>", unsafe_allow_html=True)
-
-col1, col2 = st.columns([5, 1])  # Adjust column widths for input & button
+# **Input Box & Send Button in a Single Row**
+col1, col2 = st.columns([5, 1])  # Input takes more space, button takes less
 
 with col1:
-    user_input = st.text_input("", key="user_input", label_visibility="collapsed", placeholder="Enter your question...")
+    user_input = st.text_input("Enter your question:", key="user_input", label_visibility="collapsed", placeholder="Ask your question...")
 
 with col2:
-    if st.button("Send"):
-        if user_input:
-            # Append user message
-            st.session_state.messages.append({"role": "user", "content": user_input})
+    send_clicked = st.button("Send")
 
-            # Get chatbot response
-            try:
-                response = model.generate_content(user_input)
-                bot_reply = response.text if response else "Sorry, I couldn't understand that."
-            except Exception as e:
-                bot_reply = f"Error: {e}"
+# Process input when the button is clicked
+if send_clicked and user_input:
+    # Append user message
+    st.session_state.messages.append({"role": "user", "content": user_input})
 
-            # Append bot response
-            st.session_state.messages.append({"role": "bot", "content": bot_reply})
+    # Get chatbot response
+    try:
+        response = model.generate_content(user_input)
+        bot_reply = response.text if response else "Sorry, I couldn't understand that."
+    except Exception as e:
+        bot_reply = f"Error: {e}"
 
-            # Rerun script to refresh UI
-            st.rerun()
+    # Append bot response
+    st.session_state.messages.append({"role": "bot", "content": bot_reply})
 
-st.markdown("</div>", unsafe_allow_html=True)
+    # Rerun script to refresh UI
+    st.rerun()
